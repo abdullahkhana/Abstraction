@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, Suspense, lazy } from "react"
+import { useEffect, useRef, useState, Suspense, lazy, memo, useCallback, useMemo } from "react"
 import { motion, useScroll, useInView, useTransform } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -28,9 +28,29 @@ import {
   TrendingUp,
   Camera,
   Brush,
+  Clock,
+  Users,
+  Handshake,
+  Linkedin,
+  Twitter,
+  Github,
+  Behance,
+  Instagram,
+  Dribbble,
+  Pinterest,
+  TikTok,
+  Snapchat,
+  Telegram,
+  Heart,
+  HeartHandshake,
+  MessageCircle,
+  Code,
+  Brain,
+  
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { createPortal } from "react-dom"
 
 // Lazy load heavy components for better performance
 const SceneWrapper = lazy(() => import("@/components/three/scene-wrapper").then((m) => ({ default: m.SceneWrapper })))
@@ -57,166 +77,299 @@ const InteractiveTimeline = lazy(() =>
   import("@/components/timeline/interactive-timeline").then((m) => ({ default: m.InteractiveTimeline })),
 )
 
-export default function HomePage() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
-  const [isHovering, setIsHovering] = useState(false)
-  const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([])
-  const [isMobile, setIsMobile] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll()
+// Memoize the category buttons component
+const CategoryButton = memo(({ 
+  category, 
+  isActive, 
+  onClick 
+}: { 
+  category: { id: string; label: string; icon: React.ReactNode }; 
+  isActive: boolean; 
+  onClick: () => void;
+}) => (
+  <motion.button
+    onClick={onClick}
+    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+      isActive
+        ? "bg-primary text-primary-foreground"
+        : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+    }`}
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+  >
+    {category.icon}
+    <span className="text-sm font-medium">{category.label}</span>
+  </motion.button>
+))
 
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"])
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "200%"])
+// Memoize the project card components
+const VideoCard = memo(({ project, index, isInView }: { project: any; index: number; isInView: boolean }) => (
+  <motion.div
+    key={`video-${project.slug}-${index}`}
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={isInView ? { opacity: 1, scale: 1 } : {}}
+    transition={{ duration: 0.8, delay: index * 0.2 }}
+    className="group"
+  >
+    <ModernCard variant="glass" className="overflow-hidden">
+      <div className="aspect-video relative">
+        <Image
+          src={project.image || "/placeholder.svg"}
+          alt={project.title}
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          priority={index < 2}
+        />
+        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
 
-  useEffect(() => {
-    // Check if device is mobile
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isMobile) {
-        setCursorPosition({ x: e.clientX, y: e.clientY })
-      }
-    }
-
-    const handleClick = (e: MouseEvent) => {
-      if (!isMobile) {
-        const newRipple = {
-          id: Date.now(),
-          x: e.clientX,
-          y: e.clientY,
-        }
-        setRipples((prev) => [...prev, newRipple])
-
-        setTimeout(() => {
-          setRipples((prev) => prev.filter((ripple) => ripple.id !== newRipple.id))
-        }, 1000)
-      }
-    }
-
-    if (!isMobile) {
-      window.addEventListener("mousemove", handleMouseMove)
-      window.addEventListener("click", handleClick)
-    }
-
-    return () => {
-      window.removeEventListener("resize", checkMobile)
-      if (!isMobile) {
-        window.removeEventListener("mousemove", handleMouseMove)
-        window.removeEventListener("click", handleClick)
-      }
-    }
-  }, [isMobile])
-
-  if (isLoading) {
-    return <LoadingScreen onComplete={() => setIsLoading(false)} />
-  }
-
-  return (
-    <div ref={containerRef} className="bg-background text-foreground overflow-hidden relative">
-      {/* Advanced Custom Cursor - Desktop only */}
-      {!isMobile && (
+        {/* Play button */}
         <motion.div
-          className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-50 mix-blend-difference"
-          animate={{
-            x: cursorPosition.x - 16,
-            y: cursorPosition.y - 16,
-            scale: isHovering ? 2 : 1,
-          }}
-          transition={{ type: "spring", stiffness: 500, damping: 28 }}
+          className="absolute inset-0 flex items-center justify-center"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
-          <div className="w-full h-full bg-primary rounded-full relative">
-            <motion.div
-              className="absolute inset-0 bg-primary rounded-full"
-              animate={{
-                scale: isHovering ? [1, 1.5, 1] : 1,
-                opacity: isHovering ? [0.8, 0.3, 0.8] : 0.8,
-              }}
-              transition={{ duration: 0.6, repeat: isHovering ? Number.POSITIVE_INFINITY : 0 }}
-            />
+          <div className="w-16 h-16 bg-primary/80 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer">
+            <Play className="w-6 h-6 text-primary-foreground ml-1" />
           </div>
         </motion.div>
-      )}
 
-      {/* Ripple Effects - Desktop only */}
-      {!isMobile &&
-        ripples.map((ripple) => (
-          <motion.div
-            key={ripple.id}
-            className="fixed pointer-events-none z-40"
-            style={{
-              left: ripple.x - 25,
-              top: ripple.y - 25,
-            }}
-            initial={{ scale: 0, opacity: 1 }}
-            animate={{ scale: 4, opacity: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          >
-            <div className="w-12 h-12 border-2 border-primary rounded-full" />
-          </motion.div>
-        ))}
+        {/* Video info overlay */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between">
+          <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs font-semibold text-white">
+            {project.tags[0]}
+          </span>
+          <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white">
+            {project.duration}
+          </span>
+        </div>
 
-      {/* Navigation */}
-      <motion.nav
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 1, delay: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-40 p-6 backdrop-blur-md bg-background/20"
-      >
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <motion.div
-            className="flex items-center space-x-3"
-            whileHover={!isMobile ? { scale: 1.05 } : {}}
-            onHoverStart={() => !isMobile && setIsHovering(true)}
-            onHoverEnd={() => !isMobile && setIsHovering(false)}
-          >
-            <Image src="/logo.png" alt="Abstraction Studios" width={40} height={40} className="rounded-lg" />
-            <span className="text-xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-              Abstraction Studios
+        <div className="absolute bottom-4 left-4 right-4">
+          <h3 className="text-xl font-bold text-white mb-2">{project.title}</h3>
+          <p className="text-white/80 text-sm mb-2">{project.description}</p>
+          <div className="flex items-center space-x-4 text-sm text-white/60">
+            <span className="flex items-center">
+              <Eye className="w-4 h-4 mr-1" />
+              {project.stats.views} views
             </span>
-          </motion.div>
-          <div className="flex items-center space-x-4">
-            <ThemeToggle />
-            <div className="hidden md:flex space-x-8">
-              {["Work", "Services", "About", "Contact"].map((item, index) => (
-                <motion.a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="text-muted-foreground hover:text-primary transition-colors relative"
-                  whileHover={!isMobile ? { y: -2 } : {}}
-                  onHoverStart={() => !isMobile && setIsHovering(true)}
-                  onHoverEnd={() => !isMobile && setIsHovering(false)}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.7 + index * 0.1 }}
-                >
-                  {item}
-                  <motion.div
-                    className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary"
-                    whileHover={!isMobile ? { width: "100%" } : {}}
-                    transition={{ duration: 0.3 }}
-                  />
-                </motion.a>
-              ))}
-            </div>
           </div>
         </div>
-      </motion.nav>
+      </div>
+    </ModernCard>
+  </motion.div>
+))
 
-      {/* Hero Section with 3D Background */}
+const SocialCard = memo(({ project, index, isInView }: { project: any; index: number; isInView: boolean }) => (
+        <motion.div
+    key={`social-${project.slug}-${index}`}
+    initial={{ opacity: 0, scale: 0.8, rotateY: 45 }}
+    animate={isInView ? { opacity: 1, scale: 1, rotateY: 0 } : {}}
+    transition={{ duration: 1, delay: index * 0.2 }}
+    className="group cursor-pointer perspective-1000"
+  >
+    <Link href={`/project/${project.slug}`}>
+      <ModernCard variant="glass" className="overflow-hidden">
+        <div className="aspect-[4/3] relative">
+          <Image
+            src={project.image || "/placeholder.svg"}
+            alt={project.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            priority={index < 2}
+          />
+            <motion.div
+            className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"
+            initial={{ opacity: 0.7 }}
+            whileHover={{ opacity: 0.9 }}
+            transition={{ duration: 0.3 }}
+          />
+
+          {/* Stats overlay */}
+          <div className="absolute top-4 right-4 flex space-x-4">
+            <div className="flex items-center space-x-1 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
+              <Eye className="w-3 h-3" />
+              <span className="text-xs text-white">{project.stats.views}</span>
+          </div>
+            <div className="flex items-center space-x-1 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
+              <TrendingUp className="w-3 h-3 text-primary" />
+              <span className="text-xs text-white">{project.stats.engagement}</span>
+            </div>
+          </div>
+
+          <div className="absolute bottom-6 left-6 right-6">
+            <motion.p
+              className="text-primary text-sm font-semibold mb-2"
+              initial={{ y: 20, opacity: 0 }}
+              whileHover={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {project.category}
+            </motion.p>
+            <h3 className="text-2xl font-bold text-white mb-2">{project.title}</h3>
+            <motion.p
+              className="text-white/80 text-sm mb-4"
+              initial={{ y: 20, opacity: 0 }}
+              whileHover={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              {project.description}
+            </motion.p>
+          <motion.div
+              className="flex flex-wrap gap-2"
+              initial={{ y: 20, opacity: 0 }}
+              whileHover={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              {project.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-white/80"
+                >
+                  {tag}
+            </span>
+              ))}
+          </motion.div>
+          </div>
+        </div>
+      </ModernCard>
+    </Link>
+  </motion.div>
+))
+
+const DefaultCard = memo(({ project, index, isInView }: { project: any; index: number; isInView: boolean }) => (
+  <motion.div
+    key={`default-${project.slug}-${index}`}
+    initial={{ opacity: 0, scale: 0.8, rotateY: 45 }}
+    animate={isInView ? { opacity: 1, scale: 1, rotateY: 0 } : {}}
+    transition={{ duration: 1, delay: index * 0.2 }}
+    className="group cursor-pointer perspective-1000"
+  >
+    <Link href={project.category === "web" || project.category === "branding" ? `/case-study/${project.slug}` : `#`}>
+      <ModernCard variant="glass" className="overflow-hidden">
+        <div className="aspect-[4/3] relative">
+          <Image
+            src={project.image || "/placeholder.svg"}
+            alt={project.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            priority={index < 2}
+          />
+                  <motion.div
+            className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"
+            initial={{ opacity: 0.7 }}
+            whileHover={{ opacity: 0.9 }}
+                    transition={{ duration: 0.3 }}
+                  />
+
+          <div className="absolute top-4 left-4">
+            <span className="px-3 py-1 bg-primary/80 backdrop-blur-sm rounded-full text-xs font-semibold text-primary-foreground">
+              {project.category}
+            </span>
+          </div>
+
+          <div className="absolute bottom-6 left-6 right-6">
+            <h3 className="text-2xl font-bold text-white mb-2">{project.title}</h3>
+            <motion.p
+              className="text-white/80 text-sm mb-4"
+              initial={{ y: 20, opacity: 0 }}
+              whileHover={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              {project.description}
+            </motion.p>
+            <motion.div
+              className="flex flex-wrap gap-2"
+              initial={{ y: 20, opacity: 0 }}
+              whileHover={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              {project.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-white/80"
+                >
+                  {tag}
+                </span>
+              ))}
+            </motion.div>
+            </div>
+          </div>
+      </ModernCard>
+    </Link>
+  </motion.div>
+))
+
+// Add a performance optimization hook
+function usePerformanceOptimization() {
+  const [isLowPerformance, setIsLowPerformance] = useState(false)
+  
+  useEffect(() => {
+    // Check if device is mobile or has low performance
+    const checkPerformance = () => {
+      const isMobile = window.innerWidth < 768
+      const isLowEnd = navigator.hardwareConcurrency <= 4
+      setIsLowPerformance(isMobile || isLowEnd)
+    }
+
+    checkPerformance()
+    window.addEventListener('resize', checkPerformance)
+    
+    return () => window.removeEventListener('resize', checkPerformance)
+  }, [])
+
+  return isLowPerformance
+}
+
+// Update the HeroSection component with proper types and optimizations
+function HeroSection({ 
+  isLowPerformance, 
+  scrollProgress,
+  setIsHovering 
+}: { 
+  isLowPerformance: boolean;
+  scrollProgress: any;
+  setIsHovering: (value: boolean) => void;
+}) {
+  // Move useTransform hooks to the top level
+  const backgroundY = useTransform(scrollProgress, [0, 1], ["0%", "100%"])
+  const textY = useTransform(scrollProgress, [0, 1], ["0%", "200%"])
+
+  // Memoize static values
+  const backgroundAnimation = useMemo(() => ({
+    background: [
+      "radial-gradient(circle at 20% 50%, hsl(var(--primary)) 0%, transparent 50%)",
+      "radial-gradient(circle at 80% 50%, hsl(var(--primary)) 0%, transparent 50%)",
+      "radial-gradient(circle at 50% 20%, hsl(var(--primary)) 0%, transparent 50%)",
+      "radial-gradient(circle at 50% 80%, hsl(var(--primary)) 0%, transparent 50%)",
+    ],
+  }), [])
+
+  const backgroundTransition = useMemo(() => ({
+    duration: isLowPerformance ? 20 : 12,
+    repeat: Number.POSITIVE_INFINITY,
+    ease: "linear"
+  }), [isLowPerformance])
+
+  // Memoize the hover handler
+  const handleHoverStart = useCallback(() => {
+    if (!isLowPerformance) {
+      setIsHovering(true)
+    }
+  }, [isLowPerformance, setIsHovering])
+
+  return (
       <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
-        {/* 3D Background - Reduced complexity on mobile */}
+      {/* 3D Background - Optimized for performance */}
         <div className="absolute inset-0 z-0">
           <Suspense fallback={<div className="w-full h-full bg-gradient-to-br from-primary/20 to-transparent" />}>
             <SceneWrapper>
-              {!isMobile && <ParticleField />}
+            {!isLowPerformance && <ParticleField />}
               <FloatingElements />
-              <ScrollTriggered3D scrollProgress={scrollYProgress} />
+            <motion.group>
+              <ScrollTriggered3D scrollProgress={scrollProgress} />
+            </motion.group>
             </SceneWrapper>
           </Suspense>
         </div>
@@ -225,15 +378,8 @@ export default function HomePage() {
         <motion.div
           className="absolute inset-0 opacity-30"
           style={{ y: backgroundY }}
-          animate={{
-            background: [
-              "radial-gradient(circle at 20% 50%, hsl(var(--primary)) 0%, transparent 50%)",
-              "radial-gradient(circle at 80% 50%, hsl(var(--primary)) 0%, transparent 50%)",
-              "radial-gradient(circle at 50% 20%, hsl(var(--primary)) 0%, transparent 50%)",
-              "radial-gradient(circle at 50% 80%, hsl(var(--primary)) 0%, transparent 50%)",
-            ],
-          }}
-          transition={{ duration: isMobile ? 20 : 12, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+        animate={backgroundAnimation}
+        transition={backgroundTransition}
         />
 
         <div className="text-center z-10 max-w-6xl mx-auto px-6 relative">
@@ -265,7 +411,7 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 1.2 }}
             >
-              CREATIVE
+              ABSTRACTION
             </motion.span>
             <motion.span
               className="block text-primary relative"
@@ -273,8 +419,8 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 1.4 }}
             >
-              ABSTRACTION
-              {!isMobile && (
+              STUDIOS
+            {!isLowPerformance && (
                 <motion.div
                   className="absolute -inset-2 bg-primary/20 blur-xl"
                   animate={{
@@ -305,25 +451,25 @@ export default function HomePage() {
           >
             <AdvancedButton
               variant="gradient"
-              size={isMobile ? "lg" : "xl"}
+            size={isLowPerformance ? "lg" : "xl"}
               icon={<ArrowRight className="w-5 h-5" />}
-              onClick={() => !isMobile && setIsHovering(true)}
+            onClick={handleHoverStart}
             >
               Explore Our Universe
             </AdvancedButton>
             <AdvancedButton
               variant="secondary"
-              size={isMobile ? "lg" : "xl"}
+            size={isLowPerformance ? "lg" : "xl"}
               icon={<Play className="w-5 h-5" />}
               iconPosition="left"
-              onClick={() => !isMobile && setIsHovering(true)}
+            onClick={handleHoverStart}
             >
-              Watch Our Reel
+            Lets Make It Happen
             </AdvancedButton>
           </motion.div>
         </div>
 
-        {!isMobile && (
+      {!isLowPerformance && (
           <motion.div
             className="absolute bottom-10 left-1/2 transform -translate-x-1/2"
             animate={{ y: [0, 15, 0] }}
@@ -339,188 +485,11 @@ export default function HomePage() {
           </motion.div>
         )}
       </section>
-
-      {/* Update portfolio section to include Zero Chill */}
-      <PortfolioSection />
-
-      {/* Rest of the sections... */}
-      <ServicesSection scrollProgress={scrollYProgress} />
-      <DesignGallerySection />
-      <VideographySection />
-      <CurrentProjectsSection />
-      <TestimonialsSection />
-      <AboutSection />
-      <TeamSection />
-      <TimelineSection />
-      <ContactSection />
-    </div>
   )
 }
 
-// Update PortfolioSection to include Zero Chill
-function PortfolioSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
-
-  const projects = [
-    {
-      title: "Zero Chill",
-      category: "Video Production",
-      description: "Cinematic masterpiece with 2.8M+ views and award-winning cinematography",
-      image: "/placeholder.svg?height=400&width=600",
-      tags: ["Video", "Cinematography", "Awards"],
-      slug: "zero-chill",
-      stats: { views: "2.8M", engagement: "18.5%" },
-    },
-    {
-      title: "Gnosis STEM Event",
-      category: "Social Media Management",
-      description: "Viral social media campaign achieving 5M+ peak views",
-      image: "/placeholder.svg?height=400&width=600",
-      tags: ["Social Media", "Viral Marketing", "STEM"],
-      slug: "gnosis",
-      stats: { views: "5M+", engagement: "12.8%" },
-    },
-    {
-      title: "VR Muhaarib",
-      category: "Social Media Management",
-      description: "Islamic fitness community social media growth",
-      image: "/placeholder.svg?height=400&width=600",
-      tags: ["Fitness", "Community", "Islamic"],
-      slug: "vr-muhaarib",
-      stats: { views: "2.3M", engagement: "15.2%" },
-    },
-    {
-      title: "Misaal Multi-Category Event",
-      category: "Web Development + Social Media",
-      description: "Complete website development and social media management",
-      image: "/placeholder.svg?height=400&width=600",
-      tags: ["Website", "Events", "Full Service"],
-      slug: "misaal",
-      stats: { views: "1.8M", engagement: "10.5%" },
-    },
-    {
-      title: "Gradus AI Examination",
-      category: "Web Development + App Design",
-      description: "AI-powered examination platform in development",
-      image: "/placeholder.svg?height=400&width=600",
-      tags: ["AI", "Education", "Platform"],
-      slug: "gradus",
-      stats: { status: "In Development", progress: "75%" },
-    },
-  ]
-
-  return (
-    <section id="work" ref={ref} className="py-32 px-6 bg-muted/10 relative">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1 }}
-          className="text-center mb-20"
-        >
-          <h2 className="text-5xl md:text-7xl font-bold mb-6">
-            Featured <span className="text-primary">Work</span>
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Explore our latest creative endeavors and digital innovations that have redefined industries
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {projects.map((project, index) => (
-            <motion.div
-              key={project.title}
-              initial={{ opacity: 0, scale: 0.8, rotateY: 45 }}
-              animate={isInView ? { opacity: 1, scale: 1, rotateY: 0 } : {}}
-              transition={{ duration: 1, delay: index * 0.2 }}
-              className="group cursor-pointer perspective-1000"
-            >
-              <Link href={`/project/${project.slug}`}>
-                <ModernCard variant="glass" className="overflow-hidden">
-                  <div className="aspect-[4/3] relative">
-                    <Image
-                      src={project.image || "/placeholder.svg"}
-                      alt={project.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"
-                      initial={{ opacity: 0.7 }}
-                      whileHover={{ opacity: 0.9 }}
-                      transition={{ duration: 0.3 }}
-                    />
-
-                    {/* Stats overlay */}
-                    <div className="absolute top-4 right-4 flex space-x-4">
-                      <div className="flex items-center space-x-1 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
-                        <Eye className="w-3 h-3" />
-                        <span className="text-xs text-white">{project.stats.views || project.stats.status}</span>
-                      </div>
-                      <div className="flex items-center space-x-1 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
-                        <TrendingUp className="w-3 h-3 text-primary" />
-                        <span className="text-xs text-white">{project.stats.engagement || project.stats.progress}</span>
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <motion.p
-                        className="text-primary text-sm font-semibold mb-2"
-                        initial={{ y: 20, opacity: 0 }}
-                        whileHover={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {project.category}
-                      </motion.p>
-                      <h3 className="text-2xl font-bold text-white mb-2">{project.title}</h3>
-                      <motion.p
-                        className="text-white/80 text-sm mb-4"
-                        initial={{ y: 20, opacity: 0 }}
-                        whileHover={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.3, delay: 0.1 }}
-                      >
-                        {project.description}
-                      </motion.p>
-                      <motion.div
-                        className="flex flex-wrap gap-2"
-                        initial={{ y: 20, opacity: 0 }}
-                        whileHover={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.3, delay: 0.2 }}
-                      >
-                        {project.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-white/80"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </motion.div>
-                    </div>
-                  </div>
-                </ModernCard>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.8 }}
-          className="text-center mt-16"
-        >
-          <AdvancedButton variant="secondary" size="lg" icon={<ArrowRight className="w-5 h-5" />}>
-            View All Projects
-          </AdvancedButton>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
-function ServicesSection({ scrollProgress }: { scrollProgress: any }) {
+// Update the Services Section with optimized 3D rendering
+function ServicesSection({ scrollProgress, isLowPerformance }: { scrollProgress: any; isLowPerformance: boolean }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
   const y = useTransform(scrollProgress, [0.2, 0.5], [100, -100])
@@ -572,13 +541,15 @@ function ServicesSection({ scrollProgress }: { scrollProgress: any }) {
 
   return (
     <section id="services" ref={ref} className="py-32 px-6 relative">
-      {/* 3D Background Element */}
+      {/* 3D Background Element - Optimized */}
       <div className="absolute inset-0 z-0 opacity-30">
         <Suspense fallback={null}>
           <SceneWrapper>
+            {!isLowPerformance && (
             <motion.group style={{ y }}>
               <InteractiveSphere />
             </motion.group>
+            )}
           </SceneWrapper>
         </Suspense>
       </div>
@@ -663,241 +634,6 @@ function ServicesSection({ scrollProgress }: { scrollProgress: any }) {
   )
 }
 
-function DesignGallerySection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
-
-  const designs = [
-    {
-      title: "Brand Identity Collection",
-      description: "Modern logo designs and brand systems",
-      category: "Branding",
-      image: "/placeholder.svg?height=300&width=400",
-    },
-    {
-      title: "UI/UX Design Systems",
-      description: "Comprehensive digital interface designs",
-      category: "Digital",
-      image: "/placeholder.svg?height=300&width=400",
-    },
-    {
-      title: "Print & Packaging",
-      description: "Creative print solutions and packaging design",
-      category: "Print",
-      image: "/placeholder.svg?height=300&width=400",
-    },
-    {
-      title: "Social Media Graphics",
-      description: "Engaging visual content for social platforms",
-      category: "Social",
-      image: "/placeholder.svg?height=300&width=400",
-    },
-    {
-      title: "Motion Graphics",
-      description: "Animated designs and visual effects",
-      category: "Motion",
-      image: "/placeholder.svg?height=300&width=400",
-    },
-    {
-      title: "Illustration & Art",
-      description: "Custom illustrations and artistic creations",
-      category: "Art",
-      image: "/placeholder.svg?height=300&width=400",
-    },
-  ]
-
-  return (
-    <section ref={ref} className="py-32 px-6 relative">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1 }}
-          className="text-center mb-20"
-        >
-          <h2 className="text-5xl md:text-7xl font-bold mb-6">
-            Design <span className="text-primary">Gallery</span>
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            A showcase of our creative designs across various mediums and industries
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {designs.map((design, index) => (
-            <motion.div
-              key={design.title}
-              initial={{ opacity: 0, y: 50 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group"
-            >
-              <ModernCard variant="minimal" className="overflow-hidden">
-                <div className="aspect-[4/3] relative">
-                  <Image
-                    src={design.image || "/placeholder.svg"}
-                    alt={design.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1 bg-primary/80 backdrop-blur-sm rounded-full text-xs font-semibold text-primary-foreground">
-                      {design.category}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <h3 className="text-lg font-bold text-white mb-1">{design.title}</h3>
-                    <p className="text-white/80 text-sm">{design.description}</p>
-                  </div>
-                </div>
-              </ModernCard>
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.8 }}
-          className="text-center mt-16"
-        >
-          <AdvancedButton variant="secondary" size="lg" icon={<Brush className="w-5 h-5" />}>
-            View Full Gallery
-          </AdvancedButton>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
-function VideographySection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
-
-  const trailers = [
-    {
-      title: "Zero Chill",
-      description: "Award-winning cinematic masterpiece with stunning visuals",
-      duration: "3:45",
-      views: "2.8M",
-      category: "Cinematic Production",
-      image: "/placeholder.svg?height=300&width=500",
-    },
-    {
-      title: "Gnosis STEM Event",
-      description: "Promotional trailer showcasing innovation and discovery",
-      duration: "2:30",
-      views: "1.2M",
-      category: "Event Promotion",
-      image: "/placeholder.svg?height=300&width=500",
-    },
-    {
-      title: "Misaal XI",
-      description: "Dynamic event trailer capturing the energy and excitement",
-      duration: "1:45",
-      views: "850K",
-      category: "Event Trailer",
-      image: "/placeholder.svg?height=300&width=500",
-    },
-    {
-      title: "BCPMUN",
-      description: "Professional conference trailer highlighting diplomatic excellence",
-      duration: "2:15",
-      views: "620K",
-      category: "Conference",
-      image: "/placeholder.svg?height=300&width=500",
-    },
-  ]
-
-  return (
-    <section ref={ref} className="py-32 px-6 bg-muted/10 relative">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1 }}
-          className="text-center mb-20"
-        >
-          <h2 className="text-5xl md:text-7xl font-bold mb-6">
-            Video <span className="text-primary">Production</span>
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Cinematic trailers and promotional videos that capture attention and drive engagement
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {trailers.map((trailer, index) => (
-            <motion.div
-              key={trailer.title}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.8, delay: index * 0.2 }}
-              className="group"
-            >
-              <ModernCard variant="glass" className="overflow-hidden">
-                <div className="aspect-video relative">
-                  <Image
-                    src={trailer.image || "/placeholder.svg"}
-                    alt={trailer.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
-
-                  {/* Play button */}
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <div className="w-16 h-16 bg-primary/80 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer">
-                      <Play className="w-6 h-6 text-primary-foreground ml-1" />
-                    </div>
-                  </motion.div>
-
-                  {/* Video info overlay */}
-                  <div className="absolute top-4 left-4 right-4 flex justify-between">
-                    <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs font-semibold text-white">
-                      {trailer.category}
-                    </span>
-                    <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white">
-                      {trailer.duration}
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-xl font-bold text-white mb-2">{trailer.title}</h3>
-                    <p className="text-white/80 text-sm mb-2">{trailer.description}</p>
-                    <div className="flex items-center space-x-4 text-sm text-white/60">
-                      <span className="flex items-center">
-                        <Eye className="w-4 h-4 mr-1" />
-                        {trailer.views} views
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </ModernCard>
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.8 }}
-          className="text-center mt-16"
-        >
-          <AdvancedButton variant="secondary" size="lg" icon={<Camera className="w-5 h-5" />}>
-            View All Videos
-          </AdvancedButton>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
 function CurrentProjectsSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
@@ -907,7 +643,7 @@ function CurrentProjectsSection() {
       title: "Scareed",
       description: "A psychological thriller short film exploring the depths of human fear and resilience",
       category: "Short Film",
-      status: "In Production",
+      status: "In Planning  ",
       progress: 65,
       image: "/placeholder.svg?height=300&width=500",
       details: [
@@ -1166,117 +902,74 @@ function TestimonialsSection() {
 
 function AboutSection() {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const isInView = useInView(ref, { once: true, margin: "-50px" })
 
   const stats = [
-    { number: "150+", label: "Projects Delivered", icon: <Rocket className="w-6 h-6" /> },
-    { number: "98%", label: "Client Satisfaction", icon: <Target className="w-6 h-6" /> },
-    { number: "50+", label: "Awards Won", icon: <Star className="w-6 h-6" /> },
-    { number: "24/7", label: "Creative Support", icon: <Sparkles className="w-6 h-6" /> },
+    { number: "150+", label: "Projects", icon: <Rocket className="w-5 h-5" /> },
+    { number: "98%", label: "Satisfaction", icon: <Target className="w-5 h-5" /> },
+    { number: "50+", label: "Awards", icon: <Star className="w-5 h-5" /> },
+    { number: "24/7", label: "Support", icon: <Sparkles className="w-5 h-5" /> },
   ]
 
   return (
-    <section id="about" ref={ref} className="py-32 px-6 bg-muted/10 relative">
-      {/* 3D Background */}
-      <div className="absolute inset-0 z-0 opacity-20">
-        <Suspense fallback={null}>
-          <SceneWrapper>
-            <MorphingGeometry />
-          </SceneWrapper>
-        </Suspense>
-      </div>
-
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+    <section id="about" ref={ref} className="py-20 px-6 bg-muted/5">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <motion.div
-            initial={{ opacity: 0, x: -100 }}
+            initial={{ opacity: 0, x: -50 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 1 }}
+            transition={{ duration: 0.8 }}
           >
-            <h2 className="text-5xl md:text-7xl font-bold mb-8">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Creative{" "}
-              <span className="text-primary relative">
-                Philosophy
-                <motion.div
-                  className="absolute -inset-4 bg-primary/10 blur-2xl"
-                  animate={{
-                    scale: [1, 1.3, 1],
-                    opacity: [0.3, 0.7, 0.3],
-                  }}
-                  transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY }}
-                />
-              </span>
+              <span className="text-primary">Philosophy</span>
             </h2>
-            <motion.p
-              className="text-xl text-muted-foreground mb-6 leading-relaxed"
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 1, delay: 0.3 }}
-            >
-              We believe in the power of <span className="text-primary font-semibold">abstraction</span> to reveal
-              deeper truths. Our approach combines strategic thinking with boundless creativity to produce work that not
-              only looks extraordinary but drives real, measurable results.
-            </motion.p>
-            <motion.p
-              className="text-lg text-muted-foreground mb-8 leading-relaxed"
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 1, delay: 0.5 }}
-            >
-              Every project is an opportunity to push boundaries, challenge conventions, and create something that has
-              never existed before. We don't just follow trends—we set them, break them, and create entirely new
-              paradigms.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 1, delay: 0.7 }}
-            >
-              <AdvancedButton variant="gradient" size="lg" icon={<ArrowRight className="w-5 h-5" />}>
-                Discover Our Story
-              </AdvancedButton>
-            </motion.div>
+            <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+              We believe in the power of <span className="text-primary font-medium">abstraction</span> to reveal
+              deeper truths. Our approach combines strategic thinking with creativity to produce work that 
+              looks extraordinary and drives real results.
+            </p>
+            <p className="text-base text-muted-foreground mb-8">
+              Every project is an opportunity to push boundaries and create something unique. 
+              We don't just follow trends—we set them.
+            </p>
+            <AdvancedButton variant="gradient" size="lg" icon={<ArrowRight className="w-4 h-4" />}>
+              Our Story
+            </AdvancedButton>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 100, rotateY: 45 }}
-            animate={isInView ? { opacity: 1, x: 0, rotateY: 0 } : {}}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="relative perspective-1000"
+            initial={{ opacity: 0, x: 50 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="relative"
           >
-            <ModernCard variant="neon" className="overflow-hidden">
-              <div className="aspect-square relative">
+            <ModernCard variant="minimal" className="overflow-hidden mb-6">
+              <div className="aspect-video relative">
                 <Image
-                  src="/placeholder.svg?height=500&width=500"
+                  src="/placeholder.svg?height=300&width=400"
                   alt="About Abstraction Studios"
                   fill
                   className="object-cover"
                 />
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent"
-                  animate={{
-                    opacity: [0.3, 0.6, 0.3],
-                  }}
-                  transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               </div>
             </ModernCard>
 
-            {/* Floating stats */}
-            <div className="grid grid-cols-2 gap-4 mt-8">
+            {/* Stats */}
+            <div className="grid grid-cols-4 gap-3">
               {stats.map((stat, index) => (
                 <motion.div
                   key={stat.label}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                  transition={{ duration: 0.7, delay: 1 + index * 0.1 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
                 >
                   <ModernCard variant="minimal" hover={false}>
-                    <div className="p-4 text-center">
-                      <div className="flex items-center justify-center mb-2 text-primary">{stat.icon}</div>
-                      <div className="text-2xl font-bold">{stat.number}</div>
-                      <div className="text-xs text-muted-foreground">{stat.label}</div>
+                    <div className="p-3 text-center">
+                      <div className="flex items-center justify-center mb-1 text-primary">{stat.icon}</div>
+                      <div className="text-lg font-bold mb-2">{stat.number}</div>
+                      <div className="text-sm text-muted-foreground">{stat.label}</div>
                     </div>
                   </ModernCard>
                 </motion.div>
@@ -1291,237 +984,249 @@ function AboutSection() {
 
 function TeamSection() {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const isInView = useInView(ref, { once: true, margin: "-50px" })
+  const [hoveredMember, setHoveredMember] = useState<number | null>(null)
+  const [selectedMember, setSelectedMember] = useState<number | null>(null)
 
   const teamMembers = [
     {
       name: "Abdullah Mastoor",
-      role: "Creative Director & Brand Strategist",
-      title: "Creative Visionary",
-      bio: "Visionary leader with 8+ years of experience in creative direction and brand strategy. Abdullah's innovative approach to design thinking has shaped the creative landscape for dozens of Fortune 500 companies.",
-      image: "/placeholder.svg?height=600&width=400",
-      experience: "8+ years in Creative Direction & Brand Strategy",
-      location: "New York, USA",
-      joinedYear: "2019",
-      expertise: ["Creative Direction", "Brand Strategy", "Design Thinking", "Team Leadership", "Client Relations"],
-      achievements: [
-        "Led creative strategy for 50+ Fortune 500 companies",
-        "Winner of 15+ international design awards",
-        "Featured speaker at Creative Week NYC 2023",
-        "Mentor to 100+ emerging designers",
-        "Published thought leader in Design Magazine",
-      ],
-      social: {
-        linkedin: "https://linkedin.com/in/abdullah-mastoor",
-        twitter: "https://twitter.com/abdullahmastoor",
-        email: "abdullah@abstractionstudios.com",
-      },
-      stats: {
-        projectsLed: 85,
-        yearsExperience: 8,
-        clientSatisfaction: 98,
-      },
-    },
-    {
-      name: "Zaid Sheikh",
-      role: "Technical Director & Innovation Lead",
-      title: "Technology Pioneer",
-      bio: "Technology innovator and full-stack architect with expertise in cutting-edge web technologies, AI integration, and scalable digital solutions. Zaid bridges the gap between creative vision and technical excellence.",
-      image: "/placeholder.svg?height=600&width=400",
-      experience: "10+ years in Full-Stack Development & Technical Architecture",
-      location: "San Francisco, USA",
-      joinedYear: "2019",
-      expertise: ["Full-Stack Development", "AI Integration", "Cloud Architecture", "DevOps", "Technical Strategy"],
-      achievements: [
-        "Architected 100+ scalable web applications",
-        "Pioneer in AI-assisted design tools",
-        "Holds 3 patents in creative technology",
-        "Keynote speaker at TechCrunch Disrupt 2023",
-        "Contributed to 10+ open-source projects",
-      ],
-      social: {
-        linkedin: "https://linkedin.com/in/zaid-sheikh",
-        twitter: "https://twitter.com/zaidsheikh",
-        email: "zaid@abstractionstudios.com",
-      },
-      stats: {
-        projectsLed: 120,
-        yearsExperience: 10,
-        clientSatisfaction: 97,
-      },
+      role: "Creative Director",
+      tags: ["Design Strategy", "Brand Identity", "Creative Vision"],
+      image: "/images/mastoor.png?height=400&width=400",
+      color: "from-purple-500/20 to-pink-500/20",
+      accent: "bg-purple-500",
+      quote: "Design is not just what it looks like—it's how it works and how it makes you feel.",
+      experience: "5+ Years"
     },
     {
       name: "Abdullah Khan",
-      role: "Strategy Director & Growth Architect",
-      title: "Business Strategist",
-      bio: "Strategic mastermind with deep expertise in business development, market analysis, and growth strategy. Abdullah ensures every creative decision aligns with measurable business outcomes and sustainable growth.",
-      image: "/placeholder.svg?height=600&width=400",
-      experience: "7+ years in Business Strategy & Growth Marketing",
-      location: "London, UK",
-      joinedYear: "2019",
-      expertise: ["Business Strategy", "Growth Marketing", "Market Analysis", "Partnership Development", "Operations"],
-      achievements: [
-        "Scaled company revenue from $0 to $5M+",
-        "Established partnerships with 25+ global brands",
-        "Led expansion into 3 international markets",
-        "MBA from London Business School",
-        "Featured in Forbes 30 Under 30 list",
-      ],
-      social: {
-        linkedin: "https://linkedin.com/in/abdullah-khan",
-        twitter: "https://twitter.com/abdullahkhan",
-        email: "abdullah.khan@abstractionstudios.com",
-      },
-      stats: {
-        projectsLed: 95,
-        yearsExperience: 7,
-        clientSatisfaction: 99,
-      },
+      role: "Lead Developer",
+      tags: ["Full-Stack Development", "System Architecture", "Performance"],
+      image: "/images/abdullah.png?height=400&width=400",
+      color: "from-blue-500/20 to-cyan-500/20",
+      accent: "bg-blue-500",
+      quote: "Code is poetry written in logic, crafted to solve real human problems.",
+      experience: "6+ Years"
+    },
+    {
+      name: "Zaid Sheikh",
+      role: "UX/UI Designer",
+      tags: ["User Experience", "Interface Design", "Prototyping"],
+      image: "/images/zaid.png?height=400&width=400",
+      color: "from-emerald-500/20 to-teal-500/20",
+      accent: "bg-emerald-500",
+      quote: "Great design is invisible—it just feels right and works beautifully.",
+      experience: "4+ Years"
     },
     {
       name: "Musa Kazmi",
-      role: "Digital Marketing Specialist & Content Creator",
-      title: "Digital Innovator",
-      bio: "Dynamic digital marketing expert specializing in viral content creation, social media strategy, and performance marketing. Musa's data-driven approach has generated millions of views and unprecedented engagement rates.",
-      image: "/placeholder.svg?height=600&width=400",
-      experience: "5+ years in Digital Marketing & Content Strategy",
-      location: "Dubai, UAE",
-      joinedYear: "2021",
-      expertise: [
-        "Social Media Marketing",
-        "Content Creation",
-        "Performance Marketing",
-        "Analytics",
-        "Viral Campaigns",
-      ],
-      social: {
-        linkedin: "https://linkedin.com/in/musa-kazmi",
-        twitter: "https://twitter.com/musakazmi",
-        email: "musa@abstractionstudios.com",
-      },
-      stats: {
-        projectsLed: 65,
-        yearsExperience: 5,
-        clientSatisfaction: 96,
-      },
-    },
+      role: "Marketing Strategist",
+      tags: ["Digital Marketing", "Growth Strategy", "Brand Management"],
+      image: "/placeholder.svg?height=400&width=400",
+      color: "from-orange-500/20 to-red-500/20",
+      accent: "bg-orange-500",
+      quote: "Every brand has a story—I help them tell it in ways that matter.",
+      experience: "5+ Years"
+    }
   ]
 
   return (
-    <section ref={ref} className="py-32 px-6 relative">
+    <section id="team" ref={ref} className="py-20 px-6 bg-gradient-to-br from-background via-muted/5 to-background overflow-hidden">
       <div className="max-w-7xl mx-auto">
+        {/* Floating Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        {/* Interactive Header */}
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1 }}
-          className="text-center mb-20"
+          transition={{ duration: 0.8 }}
+          className="text-center mb-20 relative z-10"
         >
-          <h2 className="text-5xl md:text-7xl font-bold mb-6">
-            Meet Our{" "}
-            <span className="text-primary relative">
-              Team
-              <motion.div
-                className="absolute -inset-4 bg-primary/10 blur-2xl"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.6, 0.3],
-                }}
-                transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY }}
-              />
-            </span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-medium mb-6">
+            <Users className="w-4 h-4" />
+            Meet The Creators
+          </div>
+          <h2 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+            Our Creative
+            <br />
+            <span className="text-primary">Collective</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            The creative minds behind Abstraction Studios, united by a passion for pushing creative boundaries and
-            transforming digital experiences
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Four minds, one vision. We blend creativity, technology, and strategy to craft 
+            digital experiences that don't just look amazing—they <em>feel</em> extraordinary.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Interactive Team Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {teamMembers.map((member, index) => (
-            <Suspense key={member.name} fallback={<div className="h-[600px] bg-muted rounded-2xl animate-pulse" />}>
-              <TeamCard member={member} index={index} />
-            </Suspense>
+            <motion.div
+              key={member.name}
+              initial={{ opacity: 0, y: 100, rotateY: -15 }}
+              animate={isInView ? { opacity: 1, y: 0, rotateY: 0 } : {}}
+              transition={{ 
+                duration: 0.8, 
+                delay: index * 0.2,
+                type: "spring",
+                stiffness: 100
+              }}
+              className="relative group"
+              onMouseEnter={() => setHoveredMember(index)}
+              onMouseLeave={() => setHoveredMember(null)}
+              onClick={() => setSelectedMember(selectedMember === index ? null : index)}
+            >
+              <ModernCard 
+                variant="gradient" 
+                className={`overflow-hidden h-full cursor-pointer transition-all duration-500 ${
+                  hoveredMember === index 
+                    ? 'scale-105 shadow-2xl' 
+                    : hoveredMember !== null 
+                      ? 'scale-95 opacity-75' 
+                      : 'scale-100'
+                }`}
+              >
+                <div className="relative p-6">
+                  {/* Animated Background */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${member.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                  
+                  {/* Profile Section */}
+                  <div className="relative z-10">
+                    <div className="relative mb-6">
+                      <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-muted to-muted/50 relative">
+                        <Image
+                          src={member.image}
+                          alt={member.name}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        
+                        {/* Floating Icons */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                            {index === 0 && <Palette className="w-8 h-8 text-white" />}
+                            {index === 1 && <Code className="w-8 h-8 text-white" />}
+                            {index === 2 && <Brush className="w-8 h-8 text-white" />}
+                            {index === 3 && <TrendingUp className="w-8 h-8 text-white" />}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Status & Experience Badge */}
+                      <div className="absolute -bottom-2 -right-2 flex items-center gap-1">
+                        <div className={`w-3 h-3 ${member.accent} rounded-full animate-pulse`}></div>
+                        <span className="text-xs bg-background/80 backdrop-blur-sm px-2 py-1 rounded-full font-medium">
+                          {member.experience}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Member Info */}
+                    <div className="text-center">
+                      <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">
+                        {member.name}
+                      </h3>
+                      <p className="text-sm text-primary font-medium mb-4 opacity-80">
+                        {member.role}
+                      </p>
+                      
+                      {/* Animated Tags */}
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {member.tags.map((tag, tagIndex) => (
+                          <motion.span
+                            key={tagIndex}
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                            transition={{ delay: (index * 0.2) + (tagIndex * 0.1) + 0.5 }}
+                            className="px-2 py-1 text-xs bg-muted/50 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all duration-300 cursor-pointer"
+                          >
+                            {tag}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hover Quote */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ 
+                      opacity: hoveredMember === index ? 1 : 0,
+                      y: hoveredMember === index ? 0 : 20
+                    }}
+                    className="absolute inset-x-4 bottom-4 z-20"
+                  >
+                    <div className="bg-background/95 backdrop-blur-sm rounded-xl p-3 text-center shadow-lg">
+                      <p className="text-xs italic text-muted-foreground">
+                        "{member.quote}"
+                      </p>
+                    </div>
+                  </motion.div>
+                </div>
+              </ModernCard>
+
+              {/* Interactive Connections */}
+              {hoveredMember === index && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute -inset-4 border-2 border-primary/30 rounded-3xl pointer-events-none"
+                ></motion.div>
+              )}
+            </motion.div>
           ))}
         </div>
 
-        {/* Team Stats */}
+        {/* Dynamic Stats Section */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 1 }}
-          className="mt-20"
+          transition={{ duration: 0.8, delay: 1 }}
+          className="relative"
         >
-          <ModernCard variant="gradient" className="max-w-4xl mx-auto">
-            <div className="p-12">
-              <h3 className="text-3xl font-bold text-center mb-12">Collective Impact</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">365+</div>
-                  <div className="text-muted-foreground">Projects Delivered</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">30+</div>
-                  <div className="text-muted-foreground">Years Combined Experience</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">98%</div>
-                  <div className="text-muted-foreground">Client Satisfaction</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">75+</div>
-                  <div className="text-muted-foreground">Awards Won</div>
-                </div>
-              </div>
-            </div>
-          </ModernCard>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
-function TimelineSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
-
-  return (
-    <section ref={ref} className="py-32 px-6 bg-muted/10 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/80 rounded-full blur-3xl" />
-      </div>
-
-      <div className="max-w-7xl mx-auto relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1 }}
-          className="text-center mb-20"
-        >
-          <h2 className="text-5xl md:text-7xl font-bold mb-6">
-            Our{" "}
-            <span className="text-primary relative">
-              Journey
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+            {[
+              { number: "20+", label: "Years Combined", icon: <Clock className="w-6 h-6" /> },
+              { number: "200+", label: "Projects Delivered", icon: <Rocket className="w-6 h-6" /> },
+              { number: "4", label: "Creative Minds", icon: <Brain className="w-6 h-6" /> },
+              { number: "∞", label: "Possibilities", icon: <Sparkles className="w-6 h-6" /> }
+            ].map((stat, index) => (
               <motion.div
-                className="absolute -inset-4 bg-primary/10 blur-2xl"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.6, 0.3],
-                }}
-                transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY }}
-              />
-            </span>
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            From a small studio apartment to a global creative powerhouse. Explore the milestones that shaped our
-            evolution and defined our mission.
-          </p>
-        </motion.div>
+                key={stat.label}
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 1.2 + index * 0.1 }}
+              >
+                <div className="text-center p-6 rounded-2xl bg-muted/20 hover:bg-muted/40 transition-colors">
+                  <div className="text-primary mb-3 flex justify-center">{stat.icon}</div>
+                  <div className="text-3xl font-bold mb-2">{stat.number}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
 
-        <Suspense fallback={<div className="h-96 bg-muted rounded-2xl animate-pulse" />}>
-          <InteractiveTimeline />
-        </Suspense>
+          {/* CTA with Animation */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.8, delay: 1.5 }}
+            className="text-center"
+          >
+            <AdvancedButton 
+              variant="gradient" 
+              size="lg" 
+              icon={<ArrowRight className="w-5 h-5" />}
+              className="group"
+            >
+              <span className="group-hover:mr-2 transition-all">Ready to Create Magic?</span>
+            </AdvancedButton>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   )
@@ -1665,5 +1370,452 @@ function ContactSection() {
         </div>
       </div>
     </section>
+  )
+}
+
+// Add these type definitions before the PortfolioSection component
+interface Project {
+  title: string;
+  category: string;
+  description: string;
+  image: string;
+  tags: string[];
+  slug: string;
+  stats: {
+    views: string;
+    engagement: string;
+  };
+  duration?: string;
+}
+
+// Add the projects array definition
+const projects: Project[] = [
+  // Social Media Projects
+  {
+    title: "Gnosis STEM Event",
+    category: "social",
+    description: "Viral social media campaign achieving 5M+ peak views",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Social Media", "Viral Marketing", "STEM"],
+    slug: "gnosis",
+    stats: { views: "5M+", engagement: "12.8%" },
+  },
+  {
+    title: "VR Muhaarib",
+    category: "social",
+    description: "Islamic fitness community social media growth",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Fitness", "Community", "Islamic"],
+    slug: "vr-muhaarib",
+    stats: { views: "2.3M", engagement: "15.2%" },
+  },
+  // Brand Identity Projects
+  {
+    title: "Gnosis Brand Identity",
+    category: "branding",
+    description: "Complete brand identity design and guidelines",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Branding", "Logo Design", "Visual Identity"],
+    slug: "gnosis-brand-identity",
+    stats: { views: "1.5M", engagement: "8.5%" },
+  },
+  {
+    title: "Misaal Brand Identity",
+    category: "branding",
+    description: "Complete brand identity design and guidelines",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Branding", "Logo Design", "Visual Identity"],
+    slug: "techflow",
+    stats: { views: "1.5M", engagement: "8.5%" },
+  },
+  {
+    title: "Zerochill Brand Identity",
+    category: "branding",
+    description: "Modern logo designs and brand systems",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Branding", "Visual Identity", "Design Systems"],
+    slug: "brand-collection",
+    stats: { views: "2.1M", engagement: "9.8%" },
+  },
+  // Website Projects
+  {
+    title: "GradusPP Website",
+    category: "web",
+    description: "Modern corporate website with interactive elements",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Web Design", "Development", "UI/UX"],
+    slug: "graduspp",
+    stats: { views: "3.2M", engagement: "10.2%" },
+  },
+  {
+    title: "Misaal Website",
+    category: "web",
+    description: "Comprehensive digital interface designs",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["UI/UX", "Design Systems", "Digital"],
+    slug: "ui-ux-systems",
+    stats: { views: "1.8M", engagement: "11.5%" },
+  },
+  {
+    title: "BMC Website",
+    category: "web",
+    description: "Comprehensive digital interface designs",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["UI/UX", "Design Systems", "Digital"],
+    slug: "ui-ux-systems",
+    stats: { views: "1.8M", engagement: "11.5%" },
+  },
+  {
+    title: "Abstraction Website",
+    category: "web",
+    description: "Comprehensive digital interface designs",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["UI/UX", "Design Systems", "Digital"],
+    slug: "ui-ux-systems",
+    stats: { views: "1.8M", engagement: "11.5%" },
+  },
+  // Video Production Projects
+  {
+    title: "Gnosis STEM Event Trailer",
+    category: "video",
+    description: "Promotional trailer showcasing innovation and discovery",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Video Production", "Event Promotion", "STEM"],
+    slug: "gnosis-trailer",
+    stats: { views: "1.2M", engagement: "9.5%" },
+    duration: "2:30",
+  },
+  {
+    title: "BCPMUN Conference",
+    category: "video",
+    description: "Professional conference trailer highlighting diplomatic excellence",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Video Production", "Conference", "Diplomacy"],
+    slug: "bcpmun",
+    stats: { views: "620K", engagement: "8.2%" },
+    duration: "2:15",
+  },
+  // Graphics & Print Projects
+  {
+    title: "Print & Packaging Collection",
+    category: "graphics",
+    description: "Creative print solutions and packaging design",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Print Design", "Packaging", "Branding"],
+    slug: "print-packaging",
+    stats: { views: "950K", engagement: "7.8%" },
+  },
+];
+
+// Update the PortfolioSection component to use the Project type
+function PortfolioSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const [activeCategory, setActiveCategory] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const projectsPerPage = 2
+
+  // Memoize categories
+  const categories = useMemo(() => [
+    { id: "all", label: "All Work", icon: <Sparkles className="w-4 h-4" /> },
+    { id: "branding", label: "Brand Identity", icon: <Palette className="w-4 h-4" /> },
+    { id: "social", label: "Social Media", icon: <Megaphone className="w-4 h-4" /> },
+    { id: "web", label: "Websites", icon: <Globe className="w-4 h-4" /> },
+    { id: "video", label: "Video Production", icon: <Video className="w-4 h-4" /> },
+    { id: "graphics", label: "Graphics & Print", icon: <Brush className="w-4 h-4" /> },
+    { id: "misc", label: "Misc", icon: <Zap className="w-4 h-4" /> },
+  ], [])
+
+  // Memoize filtered projects with proper typing
+  const filteredProjects = useMemo(() => 
+    activeCategory === "all" 
+      ? projects 
+      : projects.filter((project: Project) => project.category === activeCategory),
+    [activeCategory]
+  )
+
+  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage)
+  const currentProjects = useMemo(() => 
+    filteredProjects.slice(
+      (currentPage - 1) * projectsPerPage,
+      currentPage * projectsPerPage
+    ),
+    [filteredProjects, currentPage, projectsPerPage]
+  )
+
+  // Reset page when category changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeCategory])
+
+  // Memoize category change handler
+  const handleCategoryChange = useCallback((categoryId: string) => {
+    setActiveCategory(categoryId)
+  }, [])
+
+  // Memoize page change handlers
+  const handlePrevPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(prev - 1, 1))
+  }, [])
+
+  const handleNextPage = useCallback(() => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+  }, [totalPages])
+
+  const handlePageClick = useCallback((page: number) => {
+    setCurrentPage(page)
+  }, [])
+
+  const renderProjectCard = useCallback((project: Project, index: number) => {
+    const key = `${project.category}-${project.slug}-${index}`
+    switch (project.category) {
+      case "video":
+        return <VideoCard key={key} project={project} index={index} isInView={isInView} />
+      case "social":
+        return <SocialCard key={key} project={project} index={index} isInView={isInView} />
+      default:
+        return <DefaultCard key={key} project={project} index={index} isInView={isInView} />
+    }
+  }, [isInView])
+
+  return (
+    <section id="work" ref={ref} className="py-32 px-6 bg-muted/10 relative">
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 100 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 1 }}
+          className="text-center mb-20"
+        >
+          <h2 className="text-5xl md:text-7xl font-bold mb-6">
+            Featured <span className="text-primary">Work</span>
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Explore our latest creative endeavors and digital innovations that have redefined industries
+          </p>
+        </motion.div>
+
+        {/* Category Navigation */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="flex flex-wrap justify-center gap-3 mb-12"
+        >
+          {categories.map((category) => (
+            <CategoryButton
+              key={category.id}
+              category={category}
+              isActive={activeCategory === category.id}
+              onClick={() => handleCategoryChange(category.id)}
+            />
+          ))}
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {currentProjects.map((project, index) => renderProjectCard(project, index))}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex justify-center items-center gap-4 mt-12"
+          >
+            <AdvancedButton
+              variant="ghost"
+              size="sm"
+              icon={<ChevronLeft className="w-4 h-4" />}
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </AdvancedButton>
+            
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <motion.button
+                  key={page}
+                  onClick={() => handlePageClick(page)}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                    currentPage === page
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {page}
+                </motion.button>
+              ))}
+            </div>
+
+            <AdvancedButton
+              variant="ghost"
+              size="sm"
+              icon={<ChevronRight className="w-4 h-4" />}
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </AdvancedButton>
+          </motion.div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="text-center mt-16"
+        >
+          <AdvancedButton variant="secondary" size="lg" icon={<ArrowRight className="w-5 h-5" />}>
+            View All Projects
+          </AdvancedButton>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+// Add this custom hook for optimized cursor movement
+function useOptimizedCursor() {
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
+  const [isHovering, setIsHovering] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const rafRef = useRef<number>()
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isMobile) {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        rafRef.current = requestAnimationFrame(() => {
+          setCursorPosition({ x: e.clientX, y: e.clientY })
+        })
+      }
+    }
+    if (!isMobile) {
+      window.addEventListener("mousemove", handleMouseMove, { passive: true })
+    }
+    return () => {
+      window.removeEventListener("resize", checkMobile)
+      if (!isMobile) {
+        window.removeEventListener("mousemove", handleMouseMove)
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      }
+    }
+  }, [isMobile])
+  return { cursorPosition, isHovering, setIsHovering, isMobile }
+}
+
+// Add this nav config at the top of the file:
+const navItems = [
+  { id: "work", label: "Work", icon: <Sparkles className="w-5 h-5" /> },
+  { id: "services", label: "Services", icon: <Palette className="w-5 h-5" /> },
+  { id: "about", label: "About", icon: <Users className="w-5 h-5" /> },
+  { id: "contact", label: "Contact", icon: <Send className="w-5 h-5" /> },
+]
+
+// Update the HomePage component to use the optimized cursor
+export default function HomePage() {
+  const [isLoading, setIsLoading] = useState(true)
+  const { cursorPosition, isHovering, setIsHovering, isMobile } = useOptimizedCursor()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll()
+  const isLowPerformance = usePerformanceOptimization()
+
+  // Navigation state and handler (must be inside component)
+  const [activeNav, setActiveNav] = useState("work")
+  const handleNavClick = (id: string) => {
+    setActiveNav(id)
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  // Render custom cursor and ripples at the root (outside main content)
+  // Render custom cursor and ripples at the root (outside main content)
+  const cursorPortal = !isMobile && typeof window !== "undefined"
+    ? createPortal(
+        <motion.div
+          className="fixed top-0 left-0 w-6 h-6 pointer-events-none z-50"
+          animate={{
+            x: cursorPosition.x - 12,
+            y: cursorPosition.y - 12,
+            scale: isHovering ? 1.4 : 1,
+          }}
+          transition={{ type: "spring", stiffness: 200, damping: 18 }}
+          style={{ borderRadius: "50%", background: "#D84628", boxShadow: "0 2px 12px 0 #D8462840" }}
+        />,
+        document.body
+      )
+    : null
+
+  if (isLoading) {
+    return <LoadingScreen onComplete={() => setIsLoading(false)} />
+  }
+
+  return (
+    <div ref={containerRef} className="bg-background text-foreground overflow-hidden relative">
+      {cursorPortal}
+      {/* Navigation */}
+      <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50">
+        <motion.div
+          className="flex gap-2 px-6 py-3 rounded-full shadow-xl backdrop-blur-lg bg-white/70 dark:bg-[#181717]/80 border border-white/30 dark:border-[#232222]/60"
+          style={{ minWidth: 320 }}
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+        >
+          {navItems.map((item, idx) => (
+            <button
+              key={item.id}
+              onClick={() => handleNavClick(item.id)}
+              className={`relative flex flex-col items-center px-4 py-1 group transition-all duration-200 ${activeNav === item.id ? "text-[#D84628]" : "text-muted-foreground"}`}
+              style={{ outline: "none" }}
+              aria-label={item.label}
+            >
+              {item.icon}
+              <span className="text-xs font-medium mt-1">{item.label}</span>
+              {activeNav === item.id && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-[#D84628]"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Hero Section with optimized 3D */}
+      <HeroSection 
+        isLowPerformance={isLowPerformance} 
+        scrollProgress={scrollYProgress}
+        setIsHovering={setIsHovering}
+      />
+
+      {/* Portfolio Section */}
+      <PortfolioSection />
+
+      {/* Services Section with optimized 3D */}
+      <ServicesSection 
+        scrollProgress={scrollYProgress} 
+        isLowPerformance={isLowPerformance} 
+      />
+
+      {/* Rest of the sections */}
+      <CurrentProjectsSection />
+      <TestimonialsSection />
+      <AboutSection />
+      <TeamSection />
+      <ContactSection />
+    </div>
   )
 }

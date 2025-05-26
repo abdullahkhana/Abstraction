@@ -1193,10 +1193,10 @@ interface Project {
 const projects: Project[] = [
   // Social Media Projects
   {
-    title: "Gnosis STEM Event",
+    title: "Gnosis Olympus Edition",
     category: "social",
     description: "Viral social media campaign achieving 5M+ peak views",
-    image: "public\projects\gnosis\titlecover.png?height=400&width=600",
+    image: "/projects/gnosis/2.webp?height=400&width=600",
     tags: ["Social Media", "Viral Marketing", "STEM"],
     slug: "gnosis",
     stats: { views: "5M+", engagement: "12.8%" },
@@ -1205,21 +1205,12 @@ const projects: Project[] = [
     title: "Muhaarib",
     category: "social",
     description: "Islamic fitness community social media growth",
-    image: "/placeholder.svg?height=400&width=600",
+    image: "/projects/gnosis/1.webp?height=400&width=600",
     tags: ["Fitness", "Community", "Islamic"],
     slug: "muhaarib",
     stats: { views: "2.3M", engagement: "15.2%" },
   },
   // Brand Identity Projects
-  {
-    title: "Gnosis Brand Identity",
-    category: "branding",
-    description: "Complete brand identity design and guidelines",
-    image: "/placeholder.svg?height=400&width=600",
-    tags: ["Branding", "Logo Design", "Visual Identity"],
-    slug: "gnosis-brand-identity",
-    stats: { views: "1.5M", engagement: "8.5%" },
-  },
   {
     title: "Misaal Brand Identity",
     category: "branding",
@@ -1288,15 +1279,28 @@ const projects: Project[] = [
     duration: "2:30",
   },
   {
+    title: "Misaal Trailer",
+    category: "video",
+    description: "Professional conference trailer highlighting diplomatic excellence",
+    image: "/placeholder.svg?height=400&width=600",
+    tags: ["Video Production", "Conference", "Diplomacy"],
+    videoId: "1087622157",
+    slug: "misaal-trailer",
+    stats: { views: "620K", engagement: "8.2%" },
+    duration: "2:15",
+  },
+  {
     title: "BCPMUN Trailer",
     category: "video",
     description: "Professional conference trailer highlighting diplomatic excellence",
     image: "/placeholder.svg?height=400&width=600",
     tags: ["Video Production", "Conference", "Diplomacy"],
     slug: "bcpmun",
+    videoId: "1087622639",
     stats: { views: "620K", engagement: "8.2%" },
     duration: "2:15",
   },
+
   // Graphics & Print Projects
 ];
 

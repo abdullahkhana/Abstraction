@@ -21,52 +21,50 @@ export const VideoCard = memo(({ project, index, isInView }: ProjectCardProps) =
     transition={{ duration: 0.8, delay: index * 0.2 }}
     className="group"
   >
-    <Link href={`/project/${project.slug}`}>
-      <ModernCard variant="glass" className="overflow-hidden">
-        <div className="aspect-video relative">
-          <VideoPlayer
-            videoId={project.videoId}
-            title={project.title}
-            autoPlay={false}
-            loop={false}
-            muted={true}
-          />
-          
-          {/* Video info overlay */}
-          <div className="absolute top-4 left-4 right-4 flex justify-between z-10">
-            <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs font-semibold text-white">
-              {project.tags[0]}
-            </span>
-            <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white">
-              {project.duration}
-            </span>
-          </div>
-        </div>
+    <ModernCard variant="glass" className="overflow-hidden">
+      <div className="aspect-video relative">
+        <VideoPlayer
+          videoId={project.videoId}
+          title={project.title}
+          autoPlay={false}
+          loop={false}
+          muted={true}
+        />
         
-        <div className="p-6">
-          <h3 className="text-xl font-bold mb-2">{project.title}</h3>
-          <p className="text-muted-foreground text-sm mb-4">{project.description}</p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <span className="flex items-center space-x-1">
-                <Eye className="w-3 h-3" />
-                <span className="text-sm">{project.stats.views}</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <TrendingUp className="w-3 h-3 text-primary" />
-                <span className="text-sm">{project.stats.engagement}</span>
-              </span>
-            </div>
-            {project.awards?.length > 0 && (
-              <div className="flex items-center space-x-1 text-yellow-500">
-                <Award className="w-3 h-3" />
-                <span className="text-xs">{project.awards.length}</span>
-              </div>
-            )}
-          </div>
+        {/* Video info overlay */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between z-10">
+          <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs font-semibold text-white">
+            {project.tags[0]}
+          </span>
+          <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white">
+            {project.duration}
+          </span>
         </div>
-      </ModernCard>
-    </Link>
+      </div>
+      
+      <div className="p-6">
+        <h3 className="text-xl font-bold mb-2">{project.title}</h3>
+        <p className="text-muted-foreground text-sm mb-4">{project.description}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <span className="flex items-center space-x-1">
+              <Eye className="w-3 h-3" />
+              <span className="text-sm">{project.stats.views}</span>
+            </span>
+            <span className="flex items-center space-x-1">
+              <TrendingUp className="w-3 h-3 text-primary" />
+              <span className="text-sm">{project.stats.engagement}</span>
+            </span>
+          </div>
+          {project.awards?.length > 0 && (
+            <div className="flex items-center space-x-1 text-yellow-500">
+              <Award className="w-3 h-3" />
+              <span className="text-xs">{project.awards.length}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </ModernCard>
   </motion.div>
 ))
 

@@ -51,6 +51,7 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { createPortal } from "react-dom"
+import { VideoCard, BrandingCard, SocialCard, WebsiteCard, GraphicsCard, DefaultCard } from "@/components/projects/category-cards"
 
 // Lazy load heavy components for better performance
 const SceneWrapper = lazy(() => import("@/components/three/scene-wrapper").then((m) => ({ default: m.SceneWrapper })))
@@ -100,205 +101,6 @@ const CategoryButton = memo(({
     {category.icon}
     <span className="text-sm font-medium">{category.label}</span>
   </motion.button>
-))
-
-// Memoize the project card components
-const VideoCard = memo(({ project, index, isInView }: { project: any; index: number; isInView: boolean }) => (
-  <motion.div
-    key={`video-${project.slug}-${index}`}
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={isInView ? { opacity: 1, scale: 1 } : {}}
-    transition={{ duration: 0.8, delay: index * 0.2 }}
-    className="group"
-  >
-    <ModernCard variant="glass" className="overflow-hidden">
-      <div className="aspect-video relative">
-        <Image
-          src={project.image || "/placeholder.svg"}
-          alt={project.title}
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          priority={index < 2}
-        />
-        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
-
-        {/* Play button */}
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <div className="w-16 h-16 bg-primary/80 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer">
-            <Play className="w-6 h-6 text-primary-foreground ml-1" />
-          </div>
-        </motion.div>
-
-        {/* Video info overlay */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs font-semibold text-white">
-            {project.tags[0]}
-          </span>
-          <span className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white">
-            {project.duration}
-          </span>
-        </div>
-
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="text-xl font-bold text-white mb-2">{project.title}</h3>
-          <p className="text-white/80 text-sm mb-2">{project.description}</p>
-          <div className="flex items-center space-x-4 text-sm text-white/60">
-            <span className="flex items-center">
-              <Eye className="w-4 h-4 mr-1" />
-              {project.stats.views} views
-            </span>
-          </div>
-        </div>
-      </div>
-    </ModernCard>
-  </motion.div>
-))
-
-const SocialCard = memo(({ project, index, isInView }: { project: any; index: number; isInView: boolean }) => (
-        <motion.div
-    key={`social-${project.slug}-${index}`}
-    initial={{ opacity: 0, scale: 0.8, rotateY: 45 }}
-    animate={isInView ? { opacity: 1, scale: 1, rotateY: 0 } : {}}
-    transition={{ duration: 1, delay: index * 0.2 }}
-    className="group cursor-pointer perspective-1000"
-  >
-    <Link href={`/project/${project.slug}`}>
-      <ModernCard variant="glass" className="overflow-hidden">
-        <div className="aspect-[4/3] relative">
-          <Image
-            src={project.image || "/placeholder.svg"}
-            alt={project.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
-            priority={index < 2}
-          />
-            <motion.div
-            className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"
-            initial={{ opacity: 0.7 }}
-            whileHover={{ opacity: 0.9 }}
-            transition={{ duration: 0.3 }}
-          />
-
-          {/* Stats overlay */}
-          <div className="absolute top-4 right-4 flex space-x-4">
-            <div className="flex items-center space-x-1 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
-              <Eye className="w-3 h-3" />
-              <span className="text-xs text-white">{project.stats.views}</span>
-          </div>
-            <div className="flex items-center space-x-1 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1">
-              <TrendingUp className="w-3 h-3 text-primary" />
-              <span className="text-xs text-white">{project.stats.engagement}</span>
-            </div>
-          </div>
-
-          <div className="absolute bottom-6 left-6 right-6">
-            <motion.p
-              className="text-primary text-sm font-semibold mb-2"
-              initial={{ y: 20, opacity: 0 }}
-              whileHover={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {project.category}
-            </motion.p>
-            <h3 className="text-2xl font-bold text-white mb-2">{project.title}</h3>
-            <motion.p
-              className="text-white/80 text-sm mb-4"
-              initial={{ y: 20, opacity: 0 }}
-              whileHover={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              {project.description}
-            </motion.p>
-          <motion.div
-              className="flex flex-wrap gap-2"
-              initial={{ y: 20, opacity: 0 }}
-              whileHover={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-            >
-              {project.tags.map((tag: string) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-white/80"
-                >
-                  {tag}
-            </span>
-              ))}
-          </motion.div>
-          </div>
-        </div>
-      </ModernCard>
-    </Link>
-  </motion.div>
-))
-
-const DefaultCard = memo(({ project, index, isInView }: { project: any; index: number; isInView: boolean }) => (
-  <motion.div
-    key={`default-${project.slug}-${index}`}
-    initial={{ opacity: 0, scale: 0.8, rotateY: 45 }}
-    animate={isInView ? { opacity: 1, scale: 1, rotateY: 0 } : {}}
-    transition={{ duration: 1, delay: index * 0.2 }}
-    className="group cursor-pointer perspective-1000"
-  >
-    <Link href={project.category === "web" || project.category === "branding" ? `/case-study/${project.slug}` : `#`}>
-      <ModernCard variant="glass" className="overflow-hidden">
-        <div className="aspect-[4/3] relative">
-          <Image
-            src={project.image || "/placeholder.svg"}
-            alt={project.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
-            priority={index < 2}
-          />
-                  <motion.div
-            className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"
-            initial={{ opacity: 0.7 }}
-            whileHover={{ opacity: 0.9 }}
-                    transition={{ duration: 0.3 }}
-                  />
-
-          <div className="absolute top-4 left-4">
-            <span className="px-3 py-1 bg-primary/80 backdrop-blur-sm rounded-full text-xs font-semibold text-primary-foreground">
-              {project.category}
-            </span>
-          </div>
-
-          <div className="absolute bottom-6 left-6 right-6">
-            <h3 className="text-2xl font-bold text-white mb-2">{project.title}</h3>
-            <motion.p
-              className="text-white/80 text-sm mb-4"
-              initial={{ y: 20, opacity: 0 }}
-              whileHover={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              {project.description}
-            </motion.p>
-            <motion.div
-              className="flex flex-wrap gap-2"
-              initial={{ y: 20, opacity: 0 }}
-              whileHover={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-            >
-              {project.tags.map((tag: string) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-white/80"
-                >
-                  {tag}
-                </span>
-              ))}
-            </motion.div>
-            </div>
-          </div>
-      </ModernCard>
-    </Link>
-  </motion.div>
 ))
 
 // Add a performance optimization hook
@@ -761,22 +563,20 @@ function TestimonialsSection() {
 
   const testimonials = [
     {
-      quote:
-        "Abstraction Studios didn't just meet our expectations—they completely redefined what we thought was possible. Their creative vision transformed our entire brand ecosystem.",
-      author: "Sarah Chen",
-      company: "TechFlow Inc.",
-      role: "CEO & Founder",
-      avatar: "/placeholder.svg?height=80&width=80",
-      rating: 5,
+      "quote": "Had the most flawless experience with Abstraction Studios. It was as if they understood our vision through telepathy and incorporated it in their art.",
+      "author": "Muhammad Ahmad",
+      "company": "Takhayyul Productions",
+      "role": "Founder/CEO",
+      "avatar": "/placeholder.svg?height=80&width=80",
+      "rating": 5
     },
     {
-      quote:
-        "The team's ability to blend cutting-edge technology with artistic vision resulted in a campaign that drove 300% engagement increase and won multiple industry awards.",
-      author: "Marcus Rodriguez",
-      company: "Innovate Labs",
-      role: "Creative Director",
-      avatar: "/placeholder.svg?height=80&width=80",
-      rating: 5,
+      "quote": "Working with Abstraction Studios was like having a crystal ball into the future of digital experiences. They brought our wildest dreams to life with stunning precision.",
+      "author": "Emily Watson",
+      "company": "Future Dynamics",
+      "role": "Head of Marketing",
+      "avatar": "/placeholder.svg?height=80&width=80",
+      "rating": 5
     },
     {
       quote:
@@ -1386,6 +1186,7 @@ interface Project {
     engagement: string;
   };
   duration?: string;
+  videoId?: string;
 }
 
 // Add the projects array definition
@@ -1395,18 +1196,18 @@ const projects: Project[] = [
     title: "Gnosis STEM Event",
     category: "social",
     description: "Viral social media campaign achieving 5M+ peak views",
-    image: "/placeholder.svg?height=400&width=600",
+    image: "public\projects\gnosis\titlecover.png?height=400&width=600",
     tags: ["Social Media", "Viral Marketing", "STEM"],
     slug: "gnosis",
     stats: { views: "5M+", engagement: "12.8%" },
   },
   {
-    title: "VR Muhaarib",
+    title: "Muhaarib",
     category: "social",
     description: "Islamic fitness community social media growth",
     image: "/placeholder.svg?height=400&width=600",
     tags: ["Fitness", "Community", "Islamic"],
-    slug: "vr-muhaarib",
+    slug: "muhaarib",
     stats: { views: "2.3M", engagement: "15.2%" },
   },
   // Brand Identity Projects
@@ -1425,7 +1226,7 @@ const projects: Project[] = [
     description: "Complete brand identity design and guidelines",
     image: "/placeholder.svg?height=400&width=600",
     tags: ["Branding", "Logo Design", "Visual Identity"],
-    slug: "techflow",
+    slug: "misaal-brand-identity",
     stats: { views: "1.5M", engagement: "8.5%" },
   },
   {
@@ -1434,7 +1235,7 @@ const projects: Project[] = [
     description: "Modern logo designs and brand systems",
     image: "/placeholder.svg?height=400&width=600",
     tags: ["Branding", "Visual Identity", "Design Systems"],
-    slug: "brand-collection",
+    slug: "zerochill",
     stats: { views: "2.1M", engagement: "9.8%" },
   },
   // Website Projects
@@ -1453,7 +1254,7 @@ const projects: Project[] = [
     description: "Comprehensive digital interface designs",
     image: "/placeholder.svg?height=400&width=600",
     tags: ["UI/UX", "Design Systems", "Digital"],
-    slug: "ui-ux-systems",
+    slug: "misaalbcpjt",
     stats: { views: "1.8M", engagement: "11.5%" },
   },
   {
@@ -1462,7 +1263,7 @@ const projects: Project[] = [
     description: "Comprehensive digital interface designs",
     image: "/placeholder.svg?height=400&width=600",
     tags: ["UI/UX", "Design Systems", "Digital"],
-    slug: "ui-ux-systems",
+    slug: "bmc",
     stats: { views: "1.8M", engagement: "11.5%" },
   },
   {
@@ -1471,22 +1272,23 @@ const projects: Project[] = [
     description: "Comprehensive digital interface designs",
     image: "/placeholder.svg?height=400&width=600",
     tags: ["UI/UX", "Design Systems", "Digital"],
-    slug: "ui-ux-systems",
+    slug: "abstraction",
     stats: { views: "1.8M", engagement: "11.5%" },
   },
   // Video Production Projects
   {
-    title: "Gnosis STEM Event Trailer",
+    title: "Gnosis Trailer",
     category: "video",
     description: "Promotional trailer showcasing innovation and discovery",
     image: "/placeholder.svg?height=400&width=600",
+    videoId: "1087566254",
     tags: ["Video Production", "Event Promotion", "STEM"],
     slug: "gnosis-trailer",
     stats: { views: "1.2M", engagement: "9.5%" },
     duration: "2:30",
   },
   {
-    title: "BCPMUN Conference",
+    title: "BCPMUN Trailer",
     category: "video",
     description: "Professional conference trailer highlighting diplomatic excellence",
     image: "/placeholder.svg?height=400&width=600",
@@ -1496,15 +1298,6 @@ const projects: Project[] = [
     duration: "2:15",
   },
   // Graphics & Print Projects
-  {
-    title: "Print & Packaging Collection",
-    category: "graphics",
-    description: "Creative print solutions and packaging design",
-    image: "/placeholder.svg?height=400&width=600",
-    tags: ["Print Design", "Packaging", "Branding"],
-    slug: "print-packaging",
-    stats: { views: "950K", engagement: "7.8%" },
-  },
 ];
 
 // Update the PortfolioSection component to use the Project type
@@ -1571,8 +1364,14 @@ function PortfolioSection() {
     switch (project.category) {
       case "video":
         return <VideoCard key={key} project={project} index={index} isInView={isInView} />
+      case "branding":
+        return <BrandingCard key={key} project={project} index={index} isInView={isInView} />
       case "social":
         return <SocialCard key={key} project={project} index={index} isInView={isInView} />
+      case "web":
+        return <WebsiteCard key={key} project={project} index={index} isInView={isInView} />
+      case "graphics":
+        return <GraphicsCard key={key} project={project} index={index} isInView={isInView} />
       default:
         return <DefaultCard key={key} project={project} index={index} isInView={isInView} />
     }

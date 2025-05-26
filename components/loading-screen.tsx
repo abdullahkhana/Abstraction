@@ -42,41 +42,7 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
         >
           <div className="text-center">
             {/* Animated Glowing Ring */}
-            <motion.div
-              className="relative mb-12 flex items-center justify-center"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            >
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center"
-                style={{ zIndex: 1 }}
-                initial={{ opacity: 0.5, scale: 0.9 }}
-                animate={{
-                  opacity: [0.7, 1, 0.7],
-                  scale: [1, 1.08, 1],
-                  boxShadow: [
-                    "0 0 0px 0px #D84628",
-                    "0 0 32px 8px #D84628",
-                    "0 0 0px 0px #D84628"
-                  ]
-                }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <div className="w-24 h-24 rounded-full border-4 border-[#D84628] opacity-80" />
-              </motion.div>
-              <div className="w-16 h-16 mx-auto mb-6 relative z-10 bg-white rounded-xl flex items-center justify-center shadow-lg">
-                <Image src="/logo.png" alt="Abstraction Studios" fill className="object-contain rounded-xl" />
-              </div>
-            </motion.div>
-            <motion.h1
-              className="text-2xl font-bold text-white tracking-wide mb-2"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              Abstraction Studios
-            </motion.h1>
+
             {/* Progress Bar with shimmer */}
             <div className="w-64 mx-auto mt-8">
               <div className="h-2 bg-[#232222] rounded-full overflow-hidden relative">

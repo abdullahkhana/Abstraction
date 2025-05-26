@@ -572,7 +572,7 @@ function TestimonialsSection() {
     },
     {
       "quote": "Working with Abstraction Studios was like having a crystal ball into the future of digital experiences. They brought our wildest dreams to life with stunning precision.",
-      "author": "Emily Watson",
+      "author": "Sameer Bhai",
       "company": "Future Dynamics",
       "role": "Head of Marketing",
       "avatar": "/placeholder.svg?height=80&width=80",
@@ -810,7 +810,7 @@ function TeamSection() {
       experience: "6+ Years"
     },
     {
-      name: "Zaid Sheikh",
+      name: "Muhammad Zaid",
       role: "UX/UI Designer",
       tags: ["User Experience", "Interface Design", "Prototyping"],
       image: "/images/zaid.png?height=400&width=400",
@@ -1234,38 +1234,30 @@ const projects: Project[] = [
     title: "GradusPP Website",
     category: "web",
     description: "Modern corporate website with interactive elements",
-    image: "/placeholder.svg?height=400&width=600",
+    image: "projects/websites/graduss.webp?height=400&width=600",
     tags: ["Web Design", "Development", "UI/UX"],
     slug: "graduspp",
     stats: { views: "3.2M", engagement: "10.2%" },
   },
   {
-    title: "Misaal Website",
-    category: "web",
-    description: "Comprehensive digital interface designs",
-    image: "/placeholder.svg?height=400&width=600",
-    tags: ["UI/UX", "Design Systems", "Digital"],
-    slug: "misaalbcpjt",
-    stats: { views: "1.8M", engagement: "11.5%" },
-  },
-  {
-    title: "BMC Website",
-    category: "web",
-    description: "Comprehensive digital interface designs",
-    image: "/placeholder.svg?height=400&width=600",
-    tags: ["UI/UX", "Design Systems", "Digital"],
-    slug: "bmc",
-    stats: { views: "1.8M", engagement: "11.5%" },
-  },
-  {
     title: "Abstraction Website",
     category: "web",
     description: "Comprehensive digital interface designs",
-    image: "/placeholder.svg?height=400&width=600",
+    image: "projects/websites/abstraction.webp?height=400&width=600",
     tags: ["UI/UX", "Design Systems", "Digital"],
     slug: "abstraction",
     stats: { views: "1.8M", engagement: "11.5%" },
   },
+  {
+    title: "Misaal Website",
+    category: "web",
+    description: "Comprehensive digital interface designs",
+    image: "projects/websites/misaal.webp?height=400&width=600",
+    tags: ["UI/UX", "Design Systems", "Digital"],
+    slug: "misaalbcpjt",
+    stats: { views: "1.8M", engagement: "11.5%" },
+  },
+
   // Video Production Projects
   {
     title: "Gnosis Trailer",
